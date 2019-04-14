@@ -10,3 +10,5 @@ I'm also planning a Raspberry Pi hat with a CAN controller. The Pi, with CAN ker
 
 ## Protocols
 To the best of my knowledge, none of the major FRC CAN device manufacturers (NI, CTRE, Rev) publish documentation for the bitfields in their CAN frames. Therefore, these dissectors are based on reverse-engineering actual CAN traffic, and finding stray bits of code on the Internet. Use at your own risk. 
+
+The format of the data embedded in the CAN ID (manufacturer, device type, device ID, and API) seems to be derived from that implemented for the Jaguar: http://carlosgj.org/Lorentz/7870.SW-RDK-BDC24-UG-7243.pdf
