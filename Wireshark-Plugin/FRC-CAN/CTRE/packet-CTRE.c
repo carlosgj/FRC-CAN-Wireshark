@@ -20,6 +20,11 @@
 #define SRX_API_TURN_PIDF_1	0x5D
 #define SRX_API_FIRMWARE	0x5E
 
+#define PDP_API_STATUS1		0x50
+#define PDP_API_STATUS2     0x51
+#define PDP_API_STATUS3     0x52
+#define PDP_API_STATUSENERGY 0x5D
+#define PDP_API_CONTROL1	0x70
 
 static int proto_ctre = -1;
 
@@ -55,6 +60,27 @@ static int hf_ctre_srx_fb = -1;
 
 static int hf_ctre_srx_mode = -1;
 
+
+
+static int hf_ctre_pdp_api = -1;
+
+static int hf_ctre_pdp_i1 = -1;
+
+static int hf_ctre_pdp_i13 = -1;
+
+static int hf_ctre_pdp_i14 = -1;
+
+static int hf_ctre_pdp_i15 = -1;
+
+static int hf_ctre_pdp_i16 = -1;
+
+static int hf_ctre_pdp_intres = -1;
+
+static int hf_ctre_pdp_voltage = -1;
+
+static int hf_ctre_pdp_temp = -1;
+
+
 static int dissect_can(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data _U_);
 
 static gint ett_detail = -1;
@@ -81,6 +107,25 @@ static const value_string srx_apis[] =
 };
 
 
+static const value_string pdp_apis[] =
+{
+        { SRX_API_GENERAL, "General" },
+        { SRX_API_FEEDBACK_0, "Feedback 0" },
+        { SRX_API_QUAD_ENCODER, "Quad Encoder" },
+        { SRX_API_ANALOG_IN, "Analog In" },
+        { SRX_API_BOOT, "Boot Status" },
+        { SRX_API_UNKNOWN, "???" },
+        { SRX_API_DEBUG, "Debug" },
+        { SRX_API_PWM, "Pulse Width" },
+        { SRX_API_MOTION_PROFILE, "Motion Profile Buffer" },
+        { SRX_API_MOTION_MAGIC, "Motion Magic" },
+	{ SRX_API_UART_GADGETEER, "UART Gadgeteer" },
+	{ SRX_API_FEEDBACK_1, "Feedback 1" },
+	{ SRX_API_BASE_PIDF_0, "Base PIDF 0" },
+	{ SRX_API_TURN_PIDF_1, "Turn PIDF 1" }, 
+	{ SRX_API_FIRMWARE, "Firmware API Status" }
+};
+
 void
 proto_register_can(void)
 {
@@ -98,7 +143,7 @@ proto_register_can(void)
 	);
 
 
-    static hf_register_info hf[] = {
+    static hf_register_info hf_srx[] = {
         { &hf_ctre_srx_api,
             { "Talon SRX API", "can.frc.ctre.srx.api",
             FT_UINT32, BASE_HEX,
@@ -107,7 +152,7 @@ proto_register_can(void)
         }
     };
 
-    static hf_register_info general[] = {
+    static hf_register_info srx_general[] = {
 	{ &hf_ctre_srx_error, 
 	    { "Closed Loop Error", "can.frc.ctre.srx.error",
 	    FT_UINT64, BASE_HEX,
@@ -193,6 +238,71 @@ proto_register_can(void)
             NULL, HFILL }
         },
     };
+    
+    
+    static hf_register_info hf_pdp[] = {
+        { &hf_ctre_pdp_api,
+            { "PDP API", "can.frc.ctre.pdp.api",
+            FT_UINT32, BASE_HEX,
+            VALS(pdp_apis), 0x0000ffc0,
+            NULL, HFILL }
+        }
+    };
+    
+    
+    static hf_register_info pdp_status1[] = {
+        { &hf_ctre_pdp_i1,
+            { "Port 1 Current", "can.frc.ctre.pdp.i1",
+            FT_UINT64, BASE_DEC,
+            NULL, 0xffc0000000000000,
+            NULL, HFILL }
+        },
+    };
+    
+    static hf_register_info pdp_status3[] = {
+        { &hf_ctre_pdp_i13,
+            { "Port 13 Current", "can.frc.ctre.pdp.i13",
+            FT_UINT64, BASE_DEC,
+            NULL, 0xffc0000000000000,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_i14,
+            { "Port 14 Current", "can.frc.ctre.pdp.i14",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x003ff00000000000,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_i15,
+            { "Port 15 Current", "can.frc.ctre.pdp.i15",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x00000ffc00000000,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_i16,
+            { "Port 16 Current", "can.frc.ctre.pdp.i16",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x00000003ff000000,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_intres,
+            { "Internal Resistance", "can.frc.ctre.pdp.intres",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x0000000000ff0000,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_voltage,
+            { "Bus Voltage", "can.frc.ctre.pdp.voltage",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x000000000000ff00,
+            NULL, HFILL }
+        },
+        { &hf_ctre_pdp_temp,
+            { "Temperature", "can.frc.ctre.pdp.temp",
+            FT_UINT64, BASE_DEC,
+            NULL, 0x00000000000000ff,
+            NULL, HFILL }
+        },
+    };
 
     /* Setup protocol subtree array */
     static gint *ett[] = {
@@ -203,8 +313,11 @@ proto_register_can(void)
 //	&ett_srxgeneral
   //  };
 
-    proto_register_field_array(proto_talonsrx, hf, array_length(hf));
-    proto_register_field_array(proto_talonsrx, general, array_length(general));
+    proto_register_field_array(proto_talonsrx, hf_srx, array_length(hf_srx));
+    proto_register_field_array(proto_talonsrx, hf_pdp, array_length(hf_pdp));
+    proto_register_field_array(proto_talonsrx, srx_general, array_length(srx_general));
+    proto_register_field_array(proto_talonsrx, pdp_status1, array_length(pdp_status1));
+    proto_register_field_array(proto_talonsrx, pdp_status3, array_length(pdp_status3));
     proto_register_subtree_array(ett, array_length(ett));
     //proto_register_subtree_array(ettsrxgeneral, array_length(ettsrxgeneral));
 
@@ -287,6 +400,35 @@ dissect_can(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data 
 	    //PDP
 	    col_clear(pinfo->cinfo,COL_INFO);
 	    col_add_fstr(pinfo->cinfo, COL_INFO, "PDP Unknown Frame");
+	    proto_tree_add_item(detail_tree, hf_ctre_pdp_api, id_bits, 0, 4, ENC_LITTLE_ENDIAN);
+	    switch(api){
+		case PDP_API_STATUS1:
+            col_clear(pinfo->cinfo,COL_INFO);
+		    col_add_fstr(pinfo->cinfo, COL_INFO, "PDP Status 1");
+		    datatree = ti;
+		    proto_tree_add_item(datatree, hf_ctre_pdp_i1, tvb, 0, 8, ENC_BIG_ENDIAN);
+		    break;
+		case PDP_API_STATUS2:
+            col_clear(pinfo->cinfo,COL_INFO);
+		    col_add_fstr(pinfo->cinfo, COL_INFO, "PDP Status 2");
+		    datatree = ti;
+		    //proto_item_append_text(datatree, "General Fields");
+		    break;
+        case PDP_API_STATUS3:
+            col_clear(pinfo->cinfo,COL_INFO);
+		    col_add_fstr(pinfo->cinfo, COL_INFO, "PDP Status 3");
+		    datatree = ti;
+		    proto_tree_add_item(datatree, hf_ctre_pdp_i13, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_i14, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_i15, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_i16, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_intres, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_voltage, tvb, 0, 8, ENC_BIG_ENDIAN);
+            proto_tree_add_item(datatree, hf_ctre_pdp_temp, tvb, 0, 8, ENC_BIG_ENDIAN);
+		    break;
+		default:
+		    break;
+	    };
 	    break;
 	default:
 	    break;
