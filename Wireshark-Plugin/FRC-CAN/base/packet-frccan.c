@@ -1,8 +1,7 @@
+#include <stdio.h>
 #include "config.h"
 
 #include <epan/packet.h>
-
-#define FOO_PORT 1234
 
 static const value_string manufacturers[] =
 {
@@ -10,7 +9,14 @@ static const value_string manufacturers[] =
 	{ 0x01, "National Instruments" },
 	{ 0x02, "Texas Instruments (Stellaris)" },
 	{ 0x03, "DEKA" },
-	{ 0x04, "CTRE" }
+	{ 0x04, "CTRE" },
+	{ 0x05, "REV" },
+	{ 0x06, "Grapple" },
+	{ 0x07, "MS" },
+	{ 0x08, "Team Use" },
+	{ 0x09, "Kauai Labs" },
+	{ 0x0a, "Copperforge" },
+	{ 0x0b, "PWF" }
 };
 
 static const value_string device_types[] =
@@ -24,6 +30,8 @@ static const value_string device_types[] =
 	{ 0x06, "Ultrasonic Sensor" },
 	{ 0x07, "Gear Tooth Sensor" },
 	{ 0x08, "Power Distribution" },
+	{ 0x09, "Pnuematics" },
+	{ 0x0a, "Miscellaneous" },
 	{ 0x1f, "Firmware Update" }
 };
 
@@ -46,7 +54,6 @@ static gint ett_foo = -1;
 void
 proto_register_can(void)
 {
-
    static hf_register_info hf[] = {
         { &hf_frccan_dev_type,
             { "Device Type", "can.frc.type",
@@ -54,7 +61,7 @@ proto_register_can(void)
             VALS(device_types), 0x1f000000,
             "ASDF", HFILL }
         },
-	{ &hf_frccan_mfr,
+		{ &hf_frccan_mfr,
             { "Manufacturer", "can.frc.mfr",
             FT_UINT32, BASE_HEX,
             VALS(manufacturers), 0x00ff0000,
@@ -72,8 +79,6 @@ proto_register_can(void)
             NULL, 0x0000003f,
             "ASDF", HFILL }
         },
-
-
     };
 
     /* Setup protocol subtree array */
@@ -86,28 +91,24 @@ proto_register_can(void)
         "FRC-CAN",      /* short name */
         "frc-can"       /* abbrev     */
         );
-    
+
     proto_register_field_array(proto_can, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
     mfr_dissector_table = register_dissector_table("can.frc.mfr", "Device Manufacturer", proto_can, FT_UINT32, BASE_DEC);
-
 }
 
 void
 proto_reg_handoff_can(void)
 {
-    static dissector_handle_t can_handle;
+    dissector_handle_t can_handle;
 
     can_handle = create_dissector_handle(dissect_can, proto_can);
     dissector_add_for_decode_as("can.subdissector", can_handle);
 }
 
-
-
 static int
 dissect_can(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data _U_)
 {
-
     tvbuff_t *id_bits = tvb_new_real_data((unsigned char *)data, 4, 4);
     col_set_str(pinfo->cinfo, COL_PROTOCOL, "FRC-CAN");
     /* Clear out stuff in the info column */
@@ -123,7 +124,5 @@ dissect_can(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data 
     unsigned char mfr = ((unsigned char*)data)[2];
     dissector_try_uint_new(mfr_dissector_table, mfr, tvb, pinfo, tree, TRUE, data);
 
-
     return tvb_captured_length(tvb);
 }
-
