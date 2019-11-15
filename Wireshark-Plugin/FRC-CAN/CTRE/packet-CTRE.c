@@ -4,21 +4,26 @@
 
 #define FOO_PORT 1234
 
-#define SRX_API_GENERAL		0x50
-#define SRX_API_FEEDBACK_0	0x51
-#define SRX_API_QUAD_ENCODER	0x52
-#define SRX_API_ANALOG_IN	0x53
-#define SRX_API_BOOT		0x54
-#define SRX_API_UNKNOWN		0x55
-#define SRX_API_DEBUG		0x56
-#define SRX_API_PWM		0x57
-#define SRX_API_MOTION_PROFILE	0x58
-#define SRX_API_MOTION_MAGIC	0x59
-#define SRX_API_UART_GADGETEER	0x5A
-#define SRX_API_FEEDBACK_1	0x5B
-#define SRX_API_BASE_PIDF_0	0x5C
-#define SRX_API_TURN_PIDF_1	0x5D
-#define SRX_API_FIRMWARE	0x5E
+#define SRX_API_GENERAL		0x50       // 0x1400
+#define SRX_API_FEEDBACK_0	0x51       // 0x1440
+#define SRX_API_QUAD_ENCODER	0x52   // 0x1480
+#define SRX_API_ANALOG_IN	0x53       // 0x14c0
+#define SRX_API_BOOT		0x54       // 0x1500 - ??? not found
+#define SRX_API_MISC		0x55       // 0x1540
+#define SRX_API_COMM_STATUS 0x56       // 0x1580
+#define SRX_API_PWM		    0x57       // 0x15c0
+#define SRX_API_MOTION_PROFILE	0x58   // 0x1600
+#define SRX_API_MOTION_MAGIC	0x59   // 0x1640
+#define SRX_API_UART_GADGETEER	0x5A   // 0x1680
+#define SRX_API_FEEDBACK_1	0x5B       // 0x16c0
+#define SRX_API_BASE_PIDF_0	0x5C       // 0x1700
+#define SRX_API_TURN_PIDF_1	0x5D       // 0x1740
+#define SRX_API_FIRMWARE	0x5E       // 0x1780
+
+#define SRX_API_CONTROL_3_GENERAL                  0x02  // 400080
+#define SRX_API_CONTROL_4_ADVANCED                 0x03  // 4000C0
+#define SRX_API_CONTROL_5_FEEDBACK_OUTPUT_OVERRIDE 0x04  // 400100
+#define SRX_API_CONTROL_6_MOT_PROF_ADD_TRAJ_POINT  0x05  // 400140
 
 #define PDP_API_STATUS1		0x50
 #define PDP_API_STATUS2     0x51
@@ -137,8 +142,8 @@ static const value_string srx_apis[] =
         { SRX_API_QUAD_ENCODER, "Quad Encoder" },
         { SRX_API_ANALOG_IN, "Analog In" },
         { SRX_API_BOOT, "Boot Status" },
-        { SRX_API_UNKNOWN, "???" },
-        { SRX_API_DEBUG, "Debug" },
+        { SRX_API_MISC, "Misc" },
+        { SRX_API_COMM_STATUS, "Comm Status" },
         { SRX_API_PWM, "Pulse Width" },
         { SRX_API_MOTION_PROFILE, "Motion Profile Buffer" },
         { SRX_API_MOTION_MAGIC, "Motion Magic" },
@@ -146,7 +151,11 @@ static const value_string srx_apis[] =
 		{ SRX_API_FEEDBACK_1, "Feedback 1" },
 		{ SRX_API_BASE_PIDF_0, "Base PIDF 0" },
 		{ SRX_API_TURN_PIDF_1, "Turn PIDF 1" },
-		{ SRX_API_FIRMWARE, "Firmware API Status" }
+		{ SRX_API_FIRMWARE, "Firmware API Status" },
+		{ SRX_API_CONTROL_3_GENERAL, "Control 3 General" },
+		{ SRX_API_CONTROL_4_ADVANCED, "Control 4 Advanced" },
+		{ SRX_API_CONTROL_5_FEEDBACK_OUTPUT_OVERRIDE, "Control 5 Feedback Output Override" },
+		{ SRX_API_CONTROL_6_MOT_PROF_ADD_TRAJ_POINT, "Control 6 Motion Profile Ad Trajector Point"}
 };
 
 
@@ -673,9 +682,75 @@ dissect_can(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree _U_, void *data 
 		    break;
 		case SRX_API_FEEDBACK_0:
 		    col_clear(pinfo->cinfo,COL_INFO);
-                    col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Feedback 0");
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Feedback 0 Status");
 		    break;
 		case SRX_API_QUAD_ENCODER:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Quad Encoder Status");
+		    break;
+		case SRX_API_ANALOG_IN:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Analog In Status");
+		    break;
+		case SRX_API_BOOT:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Boot");
+		    break;
+		case SRX_API_MISC:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Misc Status");
+		    break;
+		case SRX_API_COMM_STATUS:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Comm Status");
+		    break;
+		case SRX_API_PWM:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX PWM Status");
+		    break;
+		case SRX_API_MOTION_PROFILE:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Motion Profile Status");
+		    break;
+		case SRX_API_MOTION_MAGIC:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Motion Magic Status");
+		    break;
+		case SRX_API_UART_GADGETEER:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Gadgeteer Status");
+		    break;
+		case SRX_API_FEEDBACK_1:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Feedback 1 Status");
+		    break;
+		case SRX_API_BASE_PIDF_0:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Base PIDF 0 Status");
+		    break;
+		case SRX_API_TURN_PIDF_1:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Turn PIDF 1 Status");
+		    break;
+		case SRX_API_FIRMWARE:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Firmware Status");
+		    break;
+		case SRX_API_CONTROL_3_GENERAL:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Control 3 General");
+		    break;
+		case SRX_API_CONTROL_4_ADVANCED:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Control 4 Advanced");
+		    break;
+		case SRX_API_CONTROL_5_FEEDBACK_OUTPUT_OVERRIDE:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Control 5 Feedback Output Override");
+		    break;
+		case SRX_API_CONTROL_6_MOT_PROF_ADD_TRAJ_POINT:
+		    col_clear(pinfo->cinfo,COL_INFO);
+			col_add_fstr(pinfo->cinfo, COL_INFO, "Talon SRX Control 6 Mot Prof Add Traj Point");
 		    break;
 		default:
 		    break;
